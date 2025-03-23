@@ -1,22 +1,19 @@
-from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QLabel, QPushButton, QGridLayout, QWidget, QFileDialog
-import cv2
-
-class ImageFrame(QLabel):
-    def __init__(self):
-        super().__init__()
-        self.setStyleSheet("border: 1px solid black;")
-
+from PyQt6.QtCore import QSize, pyqtSlot as Slot
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget, QFileDialog, QHBoxLayout
+from PyQt6.QtGui import QPixmap, QImage
+from Utils.VideoPlayer import VideoPlayer
+from Utils.VideoProcessor import VideoProcessor
+from Utils.VideoThread import VideoThread
 
 class Window(QWidget):
     def __init__(self):
         # variables
-        self.originalVideo = None
-        self.processedVideo = None
+        self.videoProcessor = None
+        self.video_path = None
 
         super().__init__()
-        self.showMaximized()
-        self.setWindowTitle("Broiler Chicken Recognition")
+        self.setWindowTitle("Pigeon Detector")
+        self.setGeometry(100, 100, self.minimumWidth(), 600)
 
         self.buttonOpen = QPushButton("Cargar Video")
         BUTTON_SIZE = QSize(200, 50)
@@ -25,67 +22,52 @@ class Window(QWidget):
 
         self.buttonProcess = QPushButton("Analizar Video")
         self.buttonProcess.setMinimumSize(BUTTON_SIZE)
-        #self.buttonProcess.clicked.connect(self.ProcessImage)
+        self.buttonProcess.clicked.connect(self.ProcessImage)
 
-        self.originalImageFrame = ImageFrame()
-        self.processedImageFrame = ImageFrame()
+        self.videoPlayer = VideoPlayer()
+        self.videoThread = None
 
-        layout = QGridLayout(self)
-        layout.addWidget(self.buttonOpen, 0, 0, 1, 1)
-        layout.addWidget(self.buttonProcess, 0, 1, 1, 1)
-        layout.addWidget(self.originalImageFrame, 1, 0, 1, 2)
-        layout.addWidget(self.processedImageFrame, 1, 2, 1, 2)
+        btnLayout = QHBoxLayout()
+        btnLayout.addWidget(self.buttonOpen)
+        btnLayout.addWidget(self.buttonProcess)
 
-        layout.setColumnStretch(0, 1)
-        layout.setColumnStretch(1, 1)
-        layout.setColumnStretch(2, 1)
-        layout.setColumnStretch(3, 1)
-        layout.setColumnStretch(4, 0)
+        layout = QVBoxLayout(self)
+        layout.addLayout(btnLayout)
+        layout.addWidget(self.videoPlayer)
 
     def HandleOpen(self):
         """
-        Abre el dialogo para seleccionar una imagen
+        Abre el dialogo para seleccionar un video
         """
-
-        start = "."
-        path = QFileDialog.getOpenFileName(self, "Choose File", start, "Images(*.jpg *.png)")[0]
+        start = "./resources"
+        path = QFileDialog.getOpenFileName(self, "Choose File", start, "Videos(*.mp4)")[0]
         if path == "": return
-        self.UpdateImage(path)
 
-    def UpdateImage(self, filepath):
+        if self.videoProcessor is not None and self.videoProcessor.isRunning():
+            self.videoProcessor.stop()
+
+        if self.videoThread is not None and self.videoThread.isRunning():
+            self.videoThread.stop()
+
+        self.video_path = path
+
+        self.videoThread = VideoThread(self.video_path)
+        self.videoThread.frame_signal.connect(self.setImage)
+        self.videoThread.start()
+
+    def ProcessImage(self):
+        if self.video_path is not None:
+            self.videoThread.stop()
+            self.videoProcessor = VideoProcessor(self.video_path)
+            self.videoProcessor.frame_signal.connect(self.setImage)
+            self.videoProcessor.start()
+
+    @Slot(QImage)
+    def setImage(self, image):
         """
-        Actualiza la imagen en el contenedor con la imagen seleccionada en la ventana de dialogo
-        :param filepath: str
+        Función que recibe una imagen de un hilo y la muestra en un WebCamLabel.
+        :param image: Imagen a mostrar.
+        :return:
         """
-
-        self.originalImageFrame.clear()
-        self.processedImageFrame.clear()
-        self.answers.setText("Answers will be displayed here")
-
-        # pa poder reescalar la imagen en el contenedor pero manteniendo un factor de escalado pa que no se vea feo
-        self.originalVideo = cv2.imread(filepath)
-        guiImage = self.originalVideo.copy()
-
-        # estoy bien idiota jaja la imagen con la que estabamos trabajando se deformaba segun la forma de la ventana
-        # por eso el tamaño de la gui afectaba a los resultados, ya lo puse a un tamaño fijo de 815x612 que es el bueno
-        frame_width = self.originalImageFrame.size().width()
-        scale_factor = frame_width / self.originalVideo.shape[1]
-        self.originalVideo = cv2.resize(self.originalVideo, (815, 612), interpolation=cv2.INTER_AREA)
-        guiImage = cv2.resize(guiImage, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_AREA)
-
-        #pixmap = image_processor.CvToPixmap(guiImage)
-        #self.originalImageFrame.setPixmap(pixmap)
-
-    """def ProcessImage(self):
-
-
-        self.processedVideo, question_answers = image_processor.ProcessImage(self.originalVideo)
-
-        # Convertir la lista de respuestas a un string formateado
-        self.answers.setStyleSheet("background-color: white; color: black;")
-        question_answers = "".join([f"{answer}" for i, answer in enumerate(question_answers)])
-        # Mostrar en el QTextEdit
-        self.answers.setText(str(question_answers))
-        pixmap = image_processor.CvToPixmap(self.processedVideo)
-        self.processedImageFrame.setPixmap(pixmap)
-    """
+        pixmap = QPixmap.fromImage(image)
+        self.videoPlayer.setPixmap(pixmap)
