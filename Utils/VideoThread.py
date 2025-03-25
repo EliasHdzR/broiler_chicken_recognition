@@ -5,6 +5,9 @@ from PyQt6.QtGui import QImage
 from Utils.CVtoQtImage import cvimage_to_qimage
 
 class VideoThread(QThread):
+    """
+    Clase que lee un video y emite las imágenes
+    """
     frame_signal = Signal(QImage)
 
     def __init__(self, video_path):

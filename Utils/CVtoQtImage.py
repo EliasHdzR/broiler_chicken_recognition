@@ -2,6 +2,11 @@ import cv2
 from PyQt6.QtGui import QImage
 
 def cvimage_to_qimage(frame):
+    """
+    Convierte un frame de OpenCV a un QImage
+    :param frame: Frame de OpenCV
+    :return: QImage
+    """
     height, width, channel = frame.shape
     bytes_per_line = 3 * width
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

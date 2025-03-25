@@ -56,6 +56,10 @@ class Window(QWidget):
         self.videoThread.start()
 
     def ProcessImage(self):
+        """
+        Inicia el procesamiento del video
+        :return:
+        """
         if self.video_path is not None:
             self.videoThread.stop()
             self.videoProcessor = VideoProcessor(self.video_path)

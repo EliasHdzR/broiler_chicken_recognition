@@ -6,6 +6,9 @@ from Utils.CVtoQtImage import cvimage_to_qimage
 import time
 
 class VideoProcessor(QThread):
+    """
+    Clase que procesa un video y detecta palomas
+    """
     frame_signal = Signal(QImage)
 
     def __init__(self, video_path):
@@ -15,6 +18,7 @@ class VideoProcessor(QThread):
         self.video_path = video_path
 
     def run(self):
+
         cap = cv2.VideoCapture(self.video_path)
         if not cap.isOpened():
             print(f"Error al abrir el video: {self.video_path}")
@@ -33,6 +37,7 @@ class VideoProcessor(QThread):
             results = self.model(frame)
             pigeon_count = 0
 
+            # Dibujar las cajas de las palomas detectadas con más de un 50% de certeza
             for result in results:
                 for box in result.boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
