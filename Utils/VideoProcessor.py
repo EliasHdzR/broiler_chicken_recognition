@@ -39,7 +39,7 @@ class VideoProcessor(QThread):
                     score = box.conf[0].item()
                     label = f"Paloma {score:.2f}"
 
-                    if score > 0.95:
+                    if score > 0.50:
                         pigeon_count += 1
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
