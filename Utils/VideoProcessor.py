@@ -42,7 +42,7 @@ class VideoProcessor(QThread):
                 for box in result.boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     score = box.conf[0].item()
-                    label = f"Paloma {score:.2f}"
+                    label = f"Pollo {score:.2f}"
 
                     if score > 0.50:
                         pigeon_count += 1
@@ -50,7 +50,7 @@ class VideoProcessor(QThread):
                         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
                                     0.5, (0, 255, 0), 1, cv2.LINE_AA)
 
-            cv2.putText(frame, f"Palomas detectadas: {pigeon_count}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX,
+            cv2.putText(frame, f"Pollos detectados: {pigeon_count}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX,
                         1, (0, 0, 255), 2, cv2.LINE_AA)
             image = cvimage_to_qimage(frame)
             self.frame_signal.emit(image)

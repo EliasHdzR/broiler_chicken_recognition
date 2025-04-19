@@ -12,7 +12,7 @@ class Window(QWidget):
         self.video_path = None
 
         super().__init__()
-        self.setWindowTitle("Pigeon Detector")
+        self.setWindowTitle("Chiken Broiler Recogniton")
         self.setGeometry(100, 100, self.minimumWidth(), 600)
 
         self.buttonOpen = QPushButton("Cargar Video")
@@ -39,8 +39,7 @@ class Window(QWidget):
         """
         Abre el dialogo para seleccionar un video
         """
-        start = "./resources"
-        path = QFileDialog.getOpenFileName(self, "Choose File", start, "Videos(*.mp4)")[0]
+        path = QFileDialog.getOpenFileName(self, "Choose File", "", "Videos(*.mp4)")[0]
         if path == "": return
 
         if self.videoProcessor is not None and self.videoProcessor.isRunning():
