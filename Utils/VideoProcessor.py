@@ -18,6 +18,14 @@ class VideoProcessor(QThread):
         self.video_path = video_path
 
     def run(self):
+        """
+        Procesa un archivo de vídeo fotograma a fotograma, realiza la detección de objetos utilizando un modelo
+        preentrenado en cada fotograma y emite el fotograma procesado con anotaciones visuales.
+
+        Para cada fotograma se crean cuadros delimitadores para las detecciones
+        que superan un umbral de confianza del 50 % y el recuento de detecciones se muestra en el fotograma.
+        Los fotogramas procesados se convierten al formato QImage y se emiten mediante una señal para su uso posterior.
+        """
 
         cap = cv2.VideoCapture(self.video_path)
         if not cap.isOpened():
@@ -35,9 +43,9 @@ class VideoProcessor(QThread):
                 break
 
             results = self.model(frame)
-            pigeon_count = 0
+            pollo_count = 0
 
-            # Dibujar las cajas de las palomas detectadas con más de un 50% de certeza
+            # Dibujar las cajas de los pollos detectadas con más de un 50% de certeza
             for result in results:
                 for box in result.boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
@@ -45,12 +53,12 @@ class VideoProcessor(QThread):
                     label = f"Pollo {score:.2f}"
 
                     if score > 0.50:
-                        pigeon_count += 1
+                        pollo_count += 1
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
                                     0.5, (0, 255, 0), 1, cv2.LINE_AA)
 
-            cv2.putText(frame, f"Pollos detectados: {pigeon_count}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX,
+            cv2.putText(frame, f"Pollos detectados: {pollo_count}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX,
                         1, (0, 0, 255), 2, cv2.LINE_AA)
             image = cvimage_to_qimage(frame)
             self.frame_signal.emit(image)

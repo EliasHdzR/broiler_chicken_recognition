@@ -1,0 +1,5 @@
+train: /home/eliash/Proyectos/broiler_chicken_recognition/train/images
+val: /home/eliash/Proyectos/broiler_chicken_recognition/train/images
+
+nc: 1
+names: ['Pollo']
